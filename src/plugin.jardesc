@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="MacRoman" standalone="no"?>
+<jardesc>
+    <jar path="/Users/jonas/Java/exampleplugin.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/yajhfc-plugin-example/src/plugin.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="false" manifestLocation="/yajhfc-plugin-example/src/MANIFEST.MF" manifestVersion="1.0" reuseManifest="true" saveManifest="true" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <file path="/yajhfc-plugin-example/.project"/>
+        <file path="/yajhfc-plugin-example/.classpath"/>
+        <javaElement handleIdentifier="=yajhfc-plugin-example/src"/>
+    </selectedElements>
+</jardesc>

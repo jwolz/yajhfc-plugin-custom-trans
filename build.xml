@@ -1,0 +1,71 @@
+<project name="yajhfc-plugin-example" default="dist" basedir=".">
+	<description>
+        YajHFC Custom Translation Plugin build file
+        </description>
+	<!-- set global properties for this build -->
+	<property name="src" location="src"/>
+	<property name="build.compiler" value="modern"/>
+
+	<property file="build.properties"/>
+	<property name="yajhfc-jar" location="../yajhfc/build/yajhfc.jar"/>
+
+	<property name="build" location="build"/>
+	<property name="jar-output" location="${build}/yajhfc-customtrans.jar"/>
+	<property name="srczip-output" location="${build}/yajhfc-customtrans-src.zip"/>
+
+	<target name="init">
+	
+		<fail message="YajHFC jar not found. Edit build.properties to specify the correct location.">
+			<condition>
+				<not>
+				<available file="${yajhfc-jar}"/>
+				</not>
+			</condition>
+		</fail>
+
+		<!-- Create the time stamp -->
+		<tstamp/>
+		<!-- Create the build directory structure used by compile -->
+		<mkdir dir="${build}"/>
+		
+
+	</target>
+
+	<target name="compile" depends="init" description="compile the source code" >
+		<!-- Compile the java code from ${src} into ${build} -->
+		<javac srcdir="${src}" includes="**/*.java" destdir="${build}" source="1.5" target="1.5" encoding="iso-8859-1" debug="true" debuglevel="lines,source">
+			<classpath>
+				<pathelement path="${classpath}"/>
+				<pathelement location="${yajhfc-jar}"/>
+			</classpath>
+		</javac>
+
+	</target>
+
+
+	<target name="dist" depends="compile" description="generate the distribution" >
+		<jar jarfile="${jar-output}" manifest="${src}/MANIFEST.MF">
+			<fileset dir="${build}" includes="yajhfc/**,example/**"/>
+		</jar>
+	</target>
+
+	<target name="sourcedist" depends="init" description="generate the source distribution" >
+		<zip destfile="${srczip-output}">
+			<zipfileset dir=".">
+				<exclude name="bin/"/>
+				<exclude name="build/"/>
+				<exclude name="**/*.jar"/>
+				<exclude name="**/*.log"/>
+				<exclude name="**/*~"/>
+			</zipfileset>
+		</zip>
+	</target>
+
+	<target name="fulldist" depends="dist,sourcedist" description="generate both source and binary distributions"/>
+
+	<target name="clean" description="clean up" >
+		<!-- Delete the ${build} directory tree and the jar file -->
+		<delete dir="${build}"/>
+		<delete file="${jar-output}"/>
+	</target>
+</project>
