@@ -59,7 +59,7 @@ public class EntryPoint {
 
 			@Override
 			public void saveOptions(Properties p) {
-				options.storeToProperties(p);
+				getOptions().storeToProperties(p);
 			}
 			
 		});
@@ -68,7 +68,11 @@ public class EntryPoint {
 	}
 	
 	static {
-		for (Map.Entry<String, String> lang : getOptions().languages.entrySet()) {
+		loadCustomLanguages();
+	}
+
+    public static void loadCustomLanguages() {
+        for (Map.Entry<String, String> lang : getOptions().languages.entrySet()) {
 			try {
 				addLanguageUnique(YajLanguage.supportedLanguages, 
 						new DynYajLanguage(new Locale(lang.getKey()), new File(lang.getValue())));
@@ -76,14 +80,14 @@ public class EntryPoint {
 				log.log(Level.WARNING, "Could not add language " + lang.getKey() + " from file " + lang.getValue(), e);
 			}
 		}
-	}
+    }
 	
 	private static void addLanguageUnique(List<YajLanguage> list, YajLanguage lang) {
 		// Try to find if the language has already been added:
 		ListIterator<YajLanguage> it = list.listIterator();
 		while (it.hasNext()) {
 			YajLanguage l = it.next();
-			if (l.getLocale().equals(lang)) {
+			if (l.getLocale().equals(lang.getLocale())) {
 				it.set(lang);
 				return;
 			}

@@ -24,7 +24,9 @@ import info.clearthought.layout.TableLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TreeMap;
 
 import javax.swing.Action;
@@ -45,13 +47,14 @@ import yajhfc.FileTextField;
 import yajhfc.Utils;
 import yajhfc.options.AbstractOptionsPanel;
 import yajhfc.options.OptionsWin;
+import yajhfc.util.ClipboardPopup;
 import yajhfc.util.ExampleFileFilter;
 import yajhfc.util.ExcDialogAbstractAction;
 import yajhfc.util.JTableTABAction;
 import yajhfc.util.MapTableModel;
 
 /**
- * Implements a crude and simple UI to set the three example options.
+ * Implements UI to add custom translations
  * 
  * @author jonas
  *
@@ -79,6 +82,9 @@ public class CustomTransOptionsPanel extends AbstractOptionsPanel<FaxOptions> {
         deleteAction = new ExcDialogAbstractAction() {
             @Override
             protected void actualActionPerformed(ActionEvent e) {
+                if (table.isEditing())
+                    table.getCellEditor().cancelCellEditing();
+                
                 int row = table.getSelectedRow();
                 if (row >= 0 && tableModel.rowIsDeletable(row)) {
                 	tableModel.deleteRow(row);
@@ -105,6 +111,7 @@ public class CustomTransOptionsPanel extends AbstractOptionsPanel<FaxOptions> {
         JTableTABAction.wrapDefTabAction(table);
         
         JComboBox langCombo = new JComboBox(Locale.getISOLanguages());
+        langCombo.setComponentPopupMenu(tablePopup);
         langCombo.setEditable(true);
         langEditor = new DefaultCellEditor(langCombo);
         
@@ -113,6 +120,11 @@ public class CustomTransOptionsPanel extends AbstractOptionsPanel<FaxOptions> {
         		new ExampleFileFilter(new String[] {"po", "properties"}, "All supported files"),
         		new ExampleFileFilter("po", "GNU gettext po files"),
         		new ExampleFileFilter("properties", "Java properties"));
+        ftfFile.getJButton().setComponentPopupMenu(tablePopup);
+        ClipboardPopup clp = new ClipboardPopup();
+        clp.getPopupMenu().addSeparator();
+        clp.getPopupMenu().add(deleteAction);
+        clp.addToComponent(ftfFile.getJTextField());
         fileEditor = new FTFCellEditor(ftfFile);
         
     	ftfMsgcat = new FileTextField() {
@@ -124,8 +136,9 @@ public class CustomTransOptionsPanel extends AbstractOptionsPanel<FaxOptions> {
     			super.writeTextFieldFileName("\"" + fName + "\" " + CustomTransOptions.DEF_MSGCAT_PARAMS);
     		}
     	};
+    	ClipboardPopup.DEFAULT_POPUP.addToComponent(ftfMsgcat.getJTextField());
     	
-    	JLabel labelCaption = new JLabel("<html>You can use this page to override and add new languages to YajHFC for testing purposes.<br>In order to be able to select your new language, you will need to restart the application.</html>");
+    	JLabel labelCaption = new JLabel("<html>You can use this page to override and add new languages to YajHFC for testing purposes.<br>In order to be able to select your new language, you will need to reopen the options dialog.</html>");
     	
     	add(labelCaption, "1,1");
     	add(new JScrollPane(table), "1,3");
@@ -175,6 +188,7 @@ public class CustomTransOptionsPanel extends AbstractOptionsPanel<FaxOptions> {
         opts.languages.putAll(tableModel.getMapToEdit());
         opts.po2properties = ftfMsgcat.getText();
 
+        EntryPoint.loadCustomLanguages();
     }
 
     private boolean commandLineOK(String commandLine) {
@@ -186,11 +200,31 @@ public class CustomTransOptionsPanel extends AbstractOptionsPanel<FaxOptions> {
      * @see yajhfc.options.OptionsPage#validateSettings(yajhfc.options.OptionsWin)
      */
     public boolean validateSettings(OptionsWin optionsWin) {
-    	// TODO: validate language files
+        if (table.isEditing()) {
+            table.getCellEditor().stopCellEditing();
+        }
+        
+        int poCount = 0;
+        for (Map.Entry<String,String> entry : tableModel.getMapToEdit().entrySet()) {
+            String fileName = entry.getValue();
+            if (fileName == null || fileName.length() == 0) {
+                optionsWin.focusComponent(table);
+                JOptionPane.showMessageDialog(optionsWin, "Please set the translation file for language " + entry.getKey() + ".", _("Error"), JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+            if (!fileName.toLowerCase().endsWith(".properties"))
+                poCount++;
+            File f = new File(fileName);
+            if (!f.canRead()) {
+                optionsWin.focusComponent(table);
+                JOptionPane.showMessageDialog(optionsWin, "The translation file \"" + fileName + "\" for language " + entry.getKey() + " can not be read.", _("Error"), JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        }
     	
-        if (tableModel.getMapToEdit().size() > 0 && !commandLineOK(ftfMsgcat.getText())) {
+        if (poCount > 0 && !commandLineOK(ftfMsgcat.getText())) {
             optionsWin.focusComponent(ftfMsgcat.getJTextField());
-            JOptionPane.showMessageDialog(optionsWin, "Please enter the command line to msgcat.", _("Error"), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(optionsWin, "Please enter the correct command line for msgcat.", _("Error"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
         

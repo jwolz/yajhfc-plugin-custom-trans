@@ -23,16 +23,23 @@ public class DynYajLanguage extends YajLanguage {
 	
 	public DynYajLanguage(Locale locale, File file) throws IOException {
 		super(locale);
-		bundle = loadFile(file);
+		this.bundle = loadFile(file);
 	}
 	
 	protected PropertyResourceBundle loadFile(File file) throws IOException {
-		if (!file.canRead())
-			throw new IOException("Can not read input file " + file);
 		String fileNameLower = file.getName().toLowerCase();
-		if (fileNameLower.endsWith(".po")) {
-			String cmdLine = EntryPoint.getOptions().po2properties;
-			if (cmdLine.contains("%s")) {
+
+		if (fileNameLower.endsWith(".properties")) {
+            FileInputStream in = new FileInputStream(file);
+            PropertyResourceBundle rv = new PropertyResourceBundle(in);
+            in.close();
+            return rv;
+		} else {
+		    if (!fileNameLower.endsWith(".po")) {
+		        log.warning("Unknown file suffix, interpreting file " + file + " as po file.");
+		    }
+		    String cmdLine = EntryPoint.getOptions().po2properties;
+		    if (cmdLine.contains("%s")) {
 				cmdLine = cmdLine.replace("%s", file.getPath());
 			} else {
 				cmdLine = cmdLine + " \"" + file.getPath() + "\"";
@@ -76,15 +83,7 @@ public class DynYajLanguage extends YajLanguage {
 	            throw new IOException(e);
 	        }
 	        return rv;
-		} else {
-			if (!fileNameLower.endsWith(".properties")) {
-				log.warning("Unknown file suffix, interpreting file " + file + " as properties file.");
-			}
-			FileInputStream in = new FileInputStream(file);
-			PropertyResourceBundle rv = new PropertyResourceBundle(in);
-			in.close();
-			return rv;
-		}
+		} 
 	}
 
 	@Override
